@@ -36,7 +36,7 @@ class Cloudflare {
 		if (!body.success || body.result.length === 0) {
 			throw new CloudflareApiException(`Failed to find dns record '${name}'`);
 		}
-		return body.result?.filter(rr => rr.type === rrType)[0];
+		return body.result.filter(rr => rr.type === rrType)[0];
 	}
 
 	async updateRecord(record, value) {
@@ -79,7 +79,7 @@ function parseBasicAuth(request) {
 	const authorization = request.headers.get("Authorization");
 	if (!authorization) return {};
 
-	const [, data] = authorization?.split(" ");
+	const [, data] = authorization.split(" ");
 	const decoded = atob(data);
 	const index = decoded.indexOf(":");
 
@@ -88,8 +88,8 @@ function parseBasicAuth(request) {
 	}
 
 	return {
-		username: decoded?.substring(0, index),
-		password: decoded?.substring(index + 1),
+		username: decoded.substring(0, index),
+		password: decoded.substring(index + 1),
 	};
 }
 
