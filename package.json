@@ -1,5 +1,9 @@
 {
+  "scripts": {
+    "type-check": "wrangler types --experimental-include-runtime && tsc"
+  },
   "devDependencies": {
+    "typescript": "^5.6.3",
     "wrangler": "^3.88.0"
   }
 }

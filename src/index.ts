@@ -1,16 +1,18 @@
 class BadRequestException extends Error {
-	constructor(reason) {
+	constructor(reason: string) {
 		super(reason);
 		this.status = 400;
 		this.statusText = "Bad Request";
+		this.name = 'BadRequestException';
 	}
 }
 
 class CloudflareApiException extends Error {
-	constructor(reason) {
+	constructor(reason: string) {
 		super(reason);
 		this.status = 500;
 		this.statusText = "Internal Server Error";
+		this.name = 'CloudflareApiException';
 	}
 }
 
@@ -66,7 +68,7 @@ class Cloudflare {
 	}
 }
 
-function requireHttps(request) {
+function requireHttps(request: Request) {
 	const { protocol } = new URL(request.url);
 	const forwardedProtocol = request.headers.get("x-forwarded-proto");
 
@@ -75,7 +77,7 @@ function requireHttps(request) {
 	}
 }
 
-function parseBasicAuth(request) {
+function parseBasicAuth(request: Request) {
 	const authorization = request.headers.get("Authorization");
 	if (!authorization) return {};
 
@@ -93,7 +95,7 @@ function parseBasicAuth(request) {
 	};
 }
 
-async function handleRequest(request) {
+async function handleRequest(request: Request): Promise<Response> {
 	requireHttps(request);
 	const { pathname } = new URL(request.url);
 
@@ -131,20 +133,19 @@ async function handleRequest(request) {
 	}
 
 	// Iterate over each IP and update DNS records for all hostnames
-    	for (const ip of ips) {
+    for (const ip of ips) {
 		await informAPI(hostnames, ip.trim(), username, token);
-    	}
+    }
 	return new Response("good", {
-        	status: 200,
+        status: 200,
 		headers: {
           	  	"Content-Type": "text/plain;charset=UTF-8",
-        	    	"Cache-Control": "no-store",
+        	    "Cache-Control": "no-store",
         	},
-    	});
+    });
 }
 
-async function informAPI(hostnames, ip, name, token) {
-
+async function informAPI(hostnames: string[], ip: string, name, token) {
 	const cloudflare = new Cloudflare({ token });
 
 	const isIPV4 = ip.includes("."); //poorman's ipv4 check
@@ -163,20 +164,21 @@ async function informAPI(hostnames, ip, name, token) {
 }
 
 export default {
-	async fetch(request, env, ctx) {
-		return handleRequest(request).catch((err) => {
-			console.error(err.constructor.name, err);
+	async fetch(request: Request): Promise<Response> {
+		try {
+			return await handleRequest(request);
+		} catch (err: any) {
+			console.log(err);
 			const message = err.reason || err.stack || "Unknown Error";
-
-			return new Response(message, {
+			return new Response( message || "Unknown Error", {
 				status: err.status || 500,
 				statusText: err.statusText || null,
 				headers: {
 					"Content-Type": "text/plain;charset=UTF-8",
 					"Cache-Control": "no-store",
 					"Content-Length": message.length,
-				},
+				}
 			});
-		});
-	},
+		}
+	}
 };
